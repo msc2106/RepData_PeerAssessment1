@@ -9,7 +9,8 @@ output:
 
 ## Setup
 This analysis makes use of the `tidyverse` packages.
-```{r setup, message=FALSE}
+
+```r
 library(tidyverse)
 ```
 
