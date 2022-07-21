@@ -5,21 +5,39 @@ output:
   html_document:
     keep_md: true
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message=FALSE)
+```
 
 
-## Setup
-This analysis makes use of the `tidyverse` packages.
-```{r setup, message=FALSE}
+## Required packages
+This analysis makes use of the `tidyverse` packages, as well as the 'lubridate' date manipulation tools.
+```{r packages}
 library(tidyverse)
+library(lubridate)
 ```
 
 
 ## Loading and preprocessing the data
-
+The data is loaded directly from activity.zip into a 17568 x 3 tibble.
+```{r}
+activity_data <- read_csv("activity.zip")
+activity_data
+```
+The columns are correctly formatted by `readr`'s default type interpretation.
 
 
 ## What is mean total number of steps taken per day?
+We can first summarize the data in terms of the total number of steps recorded for each day.
+```{r}
+daily_steps <- activity_data %>%
+    group_by(date) %>% summarize(steps = sum(steps, na.rm = TRUE))
+qplot(daily_steps$steps, fill = I("blue"), bins = 30, 
+      main = "Figure 1: Histogram of total steps per day", 
+      xlab = "Number of steps")
+```
 
+The median number of steps recorded per day is `r median(daily_steps$steps) %>% prettyNum(format = "d", big.mark = ",")`, while the mean is `r prettyNum(mean(daily_steps$steps), format = "d", big.mark = ",")`.
 
 
 ## What is the average daily activity pattern?
