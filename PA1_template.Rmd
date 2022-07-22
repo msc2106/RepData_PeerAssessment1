@@ -11,10 +11,11 @@ knitr::opts_chunk$set(message=FALSE)
 
 
 ## Required packages
-This analysis makes use of the `tidyverse` packages, as well as the 'lubridate' date manipulation tools.
+This analysis makes use of the `tidyverse` packages, as well as the `lubridate` date manipulation tools and `xtable` for html table formatting.
 ```{r packages}
 library(tidyverse)
 library(lubridate)
+library(xtable)
 ```
 
 
@@ -37,15 +38,51 @@ qplot(daily_steps$steps, fill = I("blue"), bins = 30,
       xlab = "Number of steps")
 ```
 
-The median number of steps recorded per day is `r median(daily_steps$steps) %>% prettyNum(format = "d", big.mark = ",")`, while the mean is `r prettyNum(mean(daily_steps$steps), format = "d", big.mark = ",")`.
+The median and mean of the daily steps per day are:
+```{r mean_median, results="asis"}
+summarize(daily_steps, Mean=mean(steps), Median=median(steps)) %>% 
+    xtable(digits=c(0,2,0)) %>% print(type = "html")
+```
 
 
 ## What is the average daily activity pattern?
+By re-grouping the original data by 5-minute interval and averages the daily observations, we can see the average pattern of number of steps at different times of day.
+```{r}
+daily_pattern <- activity_data %>%
+    group_by(interval) %>% summarize(steps = mean(steps, na.rm = TRUE))
+qplot(interval, steps, data = daily_pattern, 
+      geom = c("line"), 
+      ylab = "Average steps", 
+      xlab = "5-minute intervals", 
+      main = "Figure 2: Average Daily Pattern of Steps")
+```
 
 
 
 ## Imputing missing values
+A substantial number of observations, `r sum(is.na(activity_data$steps))` (or `r round(mean(is.na(activity_data$steps)) * 100, 2)`% on date-interval pairs), are missing. These missing observation are clustered in eight specific dates:
+```{r}
+activity_data %>% group_by(date) %>% summarize("Share missing" = mean(is.na(steps))) %>% filter("Share missing" > 0)
+```
 
+As such, other observations from a given day cannot be used to impute missing values. A simple alternative strategy would be to use the average number of steps in a given interval.
+```{r}
+activity_imputed <- activity_data %>% group_by(interval) %>% 
+    mutate(steps = if_else(is.na(steps), mean(steps, na.rm = TRUE), steps))
+```
+
+We can then recompute the daily totals of steps with the imputed data.
+```{r}
+daily_imputed <- activity_imputed %>%
+    group_by(date) %>% summarize(steps = sum(steps, na.rm = TRUE))
+qplot(daily_imputed$steps, fill = I("blue"), bins = 30, 
+      main = "Figure 3: Histogram of total steps per day with missing values imputed",
+      xlab = "Number of steps")
+```
+
+What we see is that the substantial number of days with 0 recorded steps reported in figure 1 above was the result of the days lacking any valid observations. This is also reflected in a higher mean (`r mean(daily_imputed$steps) %>% formatC(format = "f", digits = 2)`) and median (`r median(daily_imputed$steps) %>% formatC(format = "f", digits = 2`) daily steps, once missing values are imputed.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
