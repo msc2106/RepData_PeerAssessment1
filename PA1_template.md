@@ -66,7 +66,7 @@ summarize(daily_steps, Mean=mean(steps), Median=median(steps)) %>%
 ```
 
 <!-- html table generated in R 4.2.1 by xtable 1.8-4 package -->
-<!-- Fri Jul 22 12:49:06 2022 -->
+<!-- Fri Jul 22 14:15:55 2022 -->
 <table border=1>
 <tr> <th>  </th> <th> Mean </th> <th> Median </th>  </tr>
   <tr> <td align="right"> 1 </td> <td align="right"> 9354.23 </td> <td align="right"> 10395 </td> </tr>
@@ -164,4 +164,4 @@ ggplot(weekday_pattern, aes(interval, steps)) +
 
 ![](PA1_template_files/figure-html/weekdays-1.png)<!-- -->
 
-
+What this shows is that, on average, the number of steps ramps up more slowly on weekends, but attains higher levels during the day.
