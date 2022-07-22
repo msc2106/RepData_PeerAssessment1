@@ -19,7 +19,7 @@ library(xtable)
 
 
 ## Loading and preprocessing the data
-The data is loaded directly from activity.zip into a 17568 x 3 tibble.
+The data is loaded directly from `activity.zip` into a 17568 x 3 tibble.
 
 ```r
 activity_data <- read_csv("activity.zip")
@@ -56,7 +56,7 @@ qplot(daily_steps$steps, fill = I("blue"), bins = 30,
       xlab = "Number of steps")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+![](PA1_template_files/figure-html/daily_steps-1.png)<!-- -->
 
 The median and mean of the daily steps per day are:
 
@@ -66,7 +66,7 @@ summarize(daily_steps, Mean=mean(steps), Median=median(steps)) %>%
 ```
 
 <!-- html table generated in R 4.2.1 by xtable 1.8-4 package -->
-<!-- Fri Jul 22 12:00:01 2022 -->
+<!-- Fri Jul 22 12:49:06 2022 -->
 <table border=1>
 <tr> <th>  </th> <th> Mean </th> <th> Median </th>  </tr>
   <tr> <td align="right"> 1 </td> <td align="right"> 9354.23 </td> <td align="right"> 10395 </td> </tr>
@@ -79,39 +79,49 @@ By re-grouping the original data by 5-minute interval and averages the daily obs
 ```r
 daily_pattern <- activity_data %>%
     group_by(interval) %>% summarize(steps = mean(steps, na.rm = TRUE))
-qplot(interval, steps, data = daily_pattern, 
-      geom = c("line"), 
-      ylab = "Average steps", 
-      xlab = "5-minute intervals", 
-      main = "Figure 2: Average Daily Pattern of Steps")
+ggplot(daily_pattern, aes(interval, steps)) +
+    geom_line() +
+    geom_vline(xintercept = filter(daily_pattern, steps == max(steps))$interval, color = "yellow", alpha = 0.5, size = 2) +
+    labs(y = "Average steps", 
+         x = "5-minute intervals", 
+         title = "Figure 2: Average Daily Pattern of Steps")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+![](PA1_template_files/figure-html/daily_pattern-1.png)<!-- -->
 
+The vertical lines shows the interval of the maximum average number of steps.
+
+```r
+daily_pattern %>% filter(steps == max(steps))
+```
+
+```
+## # A tibble: 1 × 2
+##   interval steps
+##      <dbl> <dbl>
+## 1      835  206.
+```
 
 
 ## Imputing missing values
 A substantial number of observations, 2304 (or 13.11% on date-interval pairs), are missing. These missing observation are clustered in eight specific dates:
 
 ```r
-activity_data %>% group_by(date) %>% summarize("Share missing" = mean(is.na(steps))) %>% filter("Share missing" > 0)
+activity_data %>% group_by(date) %>% summarize("Share missing" = mean(is.na(steps))) %>% filter(`Share missing` > 0)
 ```
 
 ```
-## # A tibble: 61 × 2
-##    date       `Share missing`
-##    <date>               <dbl>
-##  1 2012-10-01               1
-##  2 2012-10-02               0
-##  3 2012-10-03               0
-##  4 2012-10-04               0
-##  5 2012-10-05               0
-##  6 2012-10-06               0
-##  7 2012-10-07               0
-##  8 2012-10-08               1
-##  9 2012-10-09               0
-## 10 2012-10-10               0
-## # … with 51 more rows
+## # A tibble: 8 × 2
+##   date       `Share missing`
+##   <date>               <dbl>
+## 1 2012-10-01               1
+## 2 2012-10-08               1
+## 3 2012-11-01               1
+## 4 2012-11-04               1
+## 5 2012-11-09               1
+## 6 2012-11-10               1
+## 7 2012-11-14               1
+## 8 2012-11-30               1
 ```
 
 As such, other observations from a given day cannot be used to impute missing values. A simple alternative strategy would be to use the average number of steps in a given interval.
@@ -131,10 +141,27 @@ qplot(daily_imputed$steps, fill = I("blue"), bins = 30,
       xlab = "Number of steps")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](PA1_template_files/figure-html/imputed_averages-1.png)<!-- -->
 
-What we see is that the substantial number of days with 0 recorded steps reported in figure 1 reflected the days with valid observations. This is also reflected in higher mean (10766.19) and median (1.076619\times 10^{4}) daily steps.
-
+What we see is that the substantial number of days with 0 recorded steps reported in figure 1 above was the result of the days lacking any valid observations. This is also reflected in a higher mean (10766.19) and median (10766.19) daily steps, once missing values are imputed.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Finally, we can compare the average daily patterns of steps between weekdays and weekends.
+
+```r
+weekday_pattern <- activity_imputed %>% 
+    mutate(weekend = factor(if_else(wday(date) %in% 6:7, "Weekends", "Weekdays"))) %>%
+    group_by(weekend, interval) %>% summarize(steps = mean(steps))
+ggplot(weekday_pattern, aes(interval, steps)) +
+    facet_grid(weekend ~ .) +
+    geom_line() +
+    labs(y = "Average steps", 
+         x = "5-minute intervals", 
+         title = "Figure 4: Average Daily Pattern of Steps on Weekends and Weekdays")
+```
+
+![](PA1_template_files/figure-html/weekdays-1.png)<!-- -->
+
+
